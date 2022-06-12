@@ -1,7 +1,7 @@
 ## What you need to do
 1. `git clone --recursive https://github.com/DrKLO/Telegram.git`
 2. Change `APP_ID` and `APP_HASH` in `Telegram/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java`
-3. Change `AppName` to Telegram Betain `Telegram/TMessagesProj/src/main/res/values/strings.xml`
+3. Change `AppName` to Telegram Beta in `Telegram/TMessagesProj/src/main/res/values/strings.xml`
 4. In `Telegram/TMessagesProj/build.gradle`, add `implementation 'com.blankj:utilcodex:1.31.0'`
 5. In `Telegram/TMessagesProj/src/main/AndroidManifest.xml`, add
 ```
