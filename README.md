@@ -5,8 +5,8 @@
 4. In `Telegram/TMessagesProj/build.gradle`, add `implementation 'com.blankj:utilcodex:1.31.0'`
 5. In `Telegram/TMessagesProj/src/main/AndroidManifest.xml`, add
     ```xml
-        <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-            tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
     ```
 6. In `Telegram/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java`, add:
     ```java
