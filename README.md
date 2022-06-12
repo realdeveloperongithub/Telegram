@@ -37,6 +37,7 @@ Below `if ((flags & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {`, add
                 intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
             }
 ```
+8. You can sync Gradle, but **do not** upgrade Android Gradle Plugin.
 
 ## Telegram messenger for Android
 
