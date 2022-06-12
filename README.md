@@ -4,40 +4,58 @@
 3. Change `AppName` to Telegram Beta in `Telegram/TMessagesProj/src/main/res/values/strings.xml`
 4. In `Telegram/TMessagesProj/build.gradle`, add `implementation 'com.blankj:utilcodex:1.31.0'`
 5. In `Telegram/TMessagesProj/src/main/AndroidManifest.xml`, add
-    ```
+    ```xml
         <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
             tools:ignore="ScopedStorage" />
     ```
-6. In `Telegram/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java`
-    Add:
-    ```
+6. In `Telegram/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java`, add:
+    ```java
     import com.blankj.utilcode.util.FileIOUtils;
     import com.blankj.utilcode.util.UriUtils;
     ```
     Below `if ((flags & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {`, add
-    ```
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-                        !Environment.isExternalStorageManager()) {
-                    Toast.makeText(this, "Storage Permission Needed", Toast.LENGTH_LONG).show();
-                    Intent storage_intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                    intent.setData(Uri.parse("package:" + this.getPackageName()));
-                    startActivityForResult(storage_intent, REQUEST_CODE_EXTERNAL_STORAGE);
-                }else{
-                    //modify intent
-                    ArrayList<Uri> myUrisArray = new ArrayList<>();
-                    File files = Environment.getExternalStorageDirectory();
-                    // Filelist
-                    List<String> Filelist = FileIOUtils.readFile2List(new File(files,"Filelist.txt"));
-                    for (String filepath : Filelist){
-                        myUrisArray.add(UriUtils.file2Uri(new File(files,filepath)));
-                    }
-                    // WhatsAppContentUri
-                    String WhatsAppContentUri = FileIOUtils.readFile2String(new File(files,"WhatsAppContentUri.txt"));
-                    myUrisArray.add(Uri.parse(WhatsAppContentUri));
-                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
-                }
+    ```java
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            !Environment.isExternalStorageManager()) {
+        Toast.makeText(this, "Storage Permission Needed", Toast.LENGTH_LONG).show();
+        Intent storage_intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+        intent.setData(Uri.parse("package:" + this.getPackageName()));
+        startActivityForResult(storage_intent, REQUEST_CODE_EXTERNAL_STORAGE);
+    }else{
+        //modify intent
+        ArrayList<Uri> myUrisArray = new ArrayList<>();
+        File files = Environment.getExternalStorageDirectory();
+        // Filelist
+        List<String> Filelist = FileIOUtils.readFile2List(new File(files,"Filelist.txt"));
+        for (String filepath : Filelist){
+            myUrisArray.add(UriUtils.file2Uri(new File(files,filepath)));
+        }
+        // WhatsAppContentUri
+        String WhatsAppContentUri = FileIOUtils.readFile2String(new File(files,"WhatsAppContentUri.txt"));
+        myUrisArray.add(Uri.parse(WhatsAppContentUri));
+        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
+    }
     ```
 7. You can sync Gradle, but **do not** upgrade Android Gradle Plugin.
+
+## How to use
+1. Say we have the chat log you want to import (Full.txt) in WhatsApp format and a MediaStorage folder which contains the multimedia files.
+2. Install [AppManager](https://github.com/MuntashirAkon/AppManager)
+3. Put Full.txt and MediaStorage under your local storage (typically `/storage/emulated/0/`).
+4. Create Filelist.txt and WhatsAppContentUri.txt in your local storage. The Filelist.txt should contain the list of files in MediaStorage, remember to include `/MediaStorage` but do not include `/storage/emulated/0/`. We will distinguish file list by recognizing new line. An example of Filelist.txt:
+    ```text
+    /MediaStorage/IMG-20220611-WA0001.jpg
+    /MediaStorage/PTT-20220611-WA0001.opus
+    ```
+5. In WhatsApp, choose a chat (any chat will do) and Export chat, share to AppManager. You will see content uris in AppManager, copy the content uri similar to `content://com.whatsapp.provider.media/export_chat/12345678901@s.whatsapp.net/67da380c-e0db-46cc-b5d6-a345d349878f3`. Put it into WhatsAppContentUri.txt.
+6. Replace the WhatsApp exported file with Full.txt. You need root to do it. Sample code:
+    ```shell
+    #!bin/sh
+    for file in /data/data/com.whatsapp/cache/export_chats/*
+    do
+        cp /storage/emulated/0/Full.txt $file
+    done
+    ```
 
 ## Credit
 
