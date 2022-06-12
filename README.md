@@ -1,3 +1,43 @@
+## What you need to do
+1. `git clone --recursive https://github.com/DrKLO/Telegram.git`
+2. Change `APP_ID` and `APP_HASH` in `Telegram/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java`
+3. Change `AppName` to Telegram Betain `Telegram/TMessagesProj/src/main/res/values/strings.xml`
+4. In `Telegram/TMessagesProj/build.gradle`, add `implementation 'com.blankj:utilcodex:1.31.0'`
+5. In `Telegram/TMessagesProj/src/main/AndroidManifest.xml`, add
+```
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+```
+7. In `Telegram/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java`
+Add:
+```
+import com.blankj.utilcode.util.FileIOUtils;
+import com.blankj.utilcode.util.UriUtils;
+```
+Below `if ((flags & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {`, add
+```
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                    !Environment.isExternalStorageManager()) {
+                Toast.makeText(this, "Storage Permission Needed", Toast.LENGTH_LONG).show();
+                Intent storage_intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                intent.setData(Uri.parse("package:" + this.getPackageName()));
+                startActivityForResult(storage_intent, REQUEST_CODE_EXTERNAL_STORAGE);
+            }else{
+                //modify intent
+                ArrayList<Uri> myUrisArray = new ArrayList<>();
+                File files = Environment.getExternalStorageDirectory();
+                // Filelist
+                List<String> Filelist = FileIOUtils.readFile2List(new File(files,"Filelist.txt"));
+                for (String filepath : Filelist){
+                    myUrisArray.add(UriUtils.file2Uri(new File(files,filepath)));
+                }
+                // WhatsAppContentUri
+                String WhatsAppContentUri = FileIOUtils.readFile2String(new File(files,"WhatsAppContentUri.txt"));
+                myUrisArray.add(Uri.parse(WhatsAppContentUri));
+                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
+            }
+```
+
 ## Telegram messenger for Android
 
 [Telegram](https://telegram.org) is a messaging app with a focus on speed and security. It’s superfast, simple and free.
