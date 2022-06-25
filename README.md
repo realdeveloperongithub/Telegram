@@ -23,20 +23,23 @@
         startActivityForResult(storage_intent, REQUEST_CODE_EXTERNAL_STORAGE);
     }else{
         //modify intent
-        ArrayList<Uri> myUrisArray = new ArrayList<>();
         File files = Environment.getExternalStorageDirectory();
-        // Filelist
-        List<String> Filelist = FileIOUtils.readFile2List(new File(files,"Filelist.txt"));
-        for (String filepath : Filelist){
-            myUrisArray.add(UriUtils.file2Uri(new File(files,filepath)));
+        if (FileUtils.isFileExists(new File(files,"Filelist.txt")) && FileUtils.isFileExists(new File(files,"WhatsAppContentUri.txt")))
+        {
+        	ArrayList<Uri> myUrisArray = new ArrayList<>();
+            // Filelist
+            List<String> Filelist = FileIOUtils.readFile2List(new File(files, "Filelist.txt"));
+            for (String filepath : Filelist) {
+                myUrisArray.add(UriUtils.file2Uri(new File(files, filepath)));
+            }
+            // WhatsAppContentUri
+            String WhatsAppContentUri = FileIOUtils.readFile2String(new File(files, "WhatsAppContentUri.txt"));
+            myUrisArray.add(Uri.parse(WhatsAppContentUri));
+            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
         }
-        // WhatsAppContentUri
-        String WhatsAppContentUri = FileIOUtils.readFile2String(new File(files,"WhatsAppContentUri.txt"));
-        myUrisArray.add(Uri.parse(WhatsAppContentUri));
-        intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
     }
     ```
-7. You can sync Gradle, but **do not** upgrade Android Gradle Plugin.
+7. You can sync Gradle, but **DO NOT** upgrade Android Gradle Plugin.
 
 ## How to use
 1. Say we have the chat log you want to import (Full.txt) in WhatsApp format and a MediaStorage folder which contains the multimedia files.
