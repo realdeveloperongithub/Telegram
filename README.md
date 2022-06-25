@@ -11,6 +11,7 @@
 6. In `Telegram/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java`, add:
     ```java
     import com.blankj.utilcode.util.FileIOUtils;
+    import com.blankj.utilcode.util.FileUtils;
     import com.blankj.utilcode.util.UriUtils;
     ```
     Below `if ((flags & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {`, add
