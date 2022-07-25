@@ -860,6 +860,7 @@ public class MessagesController extends BaseController implements NotificationCe
             exportUri.add("content://(\\d+@)?com\\.whatsapp\\.w4b\\.provider\\.media/export_chat/");
             exportUri.add("content://jp\\.naver\\.line\\.android\\.line\\.common\\.FileProvider/export-chat/");
             exportUri.add(".*WhatsApp.*\\.txt$");
+            exportUri.add(".*WhatsAppFull.txt$");
         }
 
         exportGroupUri = mainPreferences.getStringSet("exportGroupUri", null);
