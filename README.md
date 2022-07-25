@@ -34,6 +34,8 @@
                 myUrisArray.add(UriUtils.file2Uri(new File(files, filepath)));
             }
             intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
+            ClipData clipData = ClipData.newPlainText("simple text", "");
+            intent.setClipData(clipData);
         }
     }
     ```
