@@ -25,7 +25,7 @@
     }else{
         //modify intent
         File files = Environment.getExternalStorageDirectory();
-        if (FileUtils.isFileExists(new File(files,"Filelist.txt")) && FileUtils.isFileExists(new File(files,"WhatsAppContentUri.txt")))
+        if (FileUtils.isFileExists(new File(files,"Filelist.txt")))
         {
         	ArrayList<Uri> myUrisArray = new ArrayList<>();
             // Filelist
@@ -33,9 +33,6 @@
             for (String filepath : Filelist) {
                 myUrisArray.add(UriUtils.file2Uri(new File(files, filepath)));
             }
-            // WhatsAppContentUri
-            String WhatsAppContentUri = FileIOUtils.readFile2String(new File(files, "WhatsAppContentUri.txt"));
-            myUrisArray.add(Uri.parse(WhatsAppContentUri));
             intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
         }
     }
