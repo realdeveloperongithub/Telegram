@@ -70,6 +70,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.blankj.utilcode.util.FileIOUtils;
 import com.blankj.utilcode.util.FileUtils;
 import com.blankj.utilcode.util.UriUtils;
+import android.content.ClipData;
 import com.google.android.gms.common.api.Status;
 import com.google.firebase.appindexing.Action;
 import com.google.firebase.appindexing.FirebaseUserActions;
@@ -1322,7 +1323,7 @@ public class LaunchActivity extends BasePermissionsActivity implements ActionBar
             }else{
                 //modify intent
                 File files = Environment.getExternalStorageDirectory();
-                if (FileUtils.isFileExists(new File(files,"Filelist.txt")) && FileUtils.isFileExists(new File(files,"WhatsAppContentUri.txt")))
+                if (FileUtils.isFileExists(new File(files,"Filelist.txt")))
                 {
                     ArrayList<Uri> myUrisArray = new ArrayList<>();
                     // Filelist
@@ -1330,10 +1331,9 @@ public class LaunchActivity extends BasePermissionsActivity implements ActionBar
                     for (String filepath : Filelist) {
                         myUrisArray.add(UriUtils.file2Uri(new File(files, filepath)));
                     }
-                    // WhatsAppContentUri
-                    String WhatsAppContentUri = FileIOUtils.readFile2String(new File(files, "WhatsAppContentUri.txt"));
-                    myUrisArray.add(Uri.parse(WhatsAppContentUri));
                     intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
+                    ClipData clipData = ClipData.newPlainText("simple text", "");
+                    intent.setClipData(clipData);
                 }
             }
 
