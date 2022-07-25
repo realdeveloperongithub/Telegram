@@ -8,11 +8,16 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
     ```
-6. In `Telegram/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java`, add:
+6. In `Telegram/TMessagesProj/src/main/java/org/telegram/messenger/MessagesController.java`, under `exportUri.add(".*WhatsApp.*\\.txt$");`, add
+    ```java
+    exportUri.add(".*WhatsAppFull.txt$");
+    ```
+7. In `Telegram/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java`, add
     ```java
     import com.blankj.utilcode.util.FileIOUtils;
     import com.blankj.utilcode.util.FileUtils;
     import com.blankj.utilcode.util.UriUtils;
+    import android.content.ClipData;
     ```
     Below `if ((flags & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {`, add
     ```java
@@ -39,7 +44,7 @@
         }
     }
     ```
-7. You can sync Gradle, but **DO NOT** upgrade Android Gradle Plugin.
+8. You can sync Gradle, but **DO NOT** upgrade Android Gradle Plugin.
 
 ## How to use
 1. Say we have the chat log you want to import (Full.txt) in WhatsApp format and a MediaStorage folder which contains the multimedia files.
