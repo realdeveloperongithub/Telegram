@@ -47,23 +47,16 @@
 8. You can sync Gradle, but **DO NOT** upgrade Android Gradle Plugin.
 
 ## How to use
-1. Say we have the chat log you want to import (Full.txt) in WhatsApp format and a MediaStorage folder which contains the multimedia files.
+1. Say we have the chat log you want to import (WhatsAppFull.txt) in WhatsApp format and a MediaStorage folder which contains the multimedia files.
 2. Install [AppManager](https://github.com/MuntashirAkon/AppManager)
 3. Put Full.txt and MediaStorage under your local storage (typically `/storage/emulated/0/`).
-4. Create Filelist.txt and WhatsAppContentUri.txt in your local storage. The Filelist.txt should contain the list of files in MediaStorage, remember to include `/MediaStorage` but do not include `/storage/emulated/0/`. We will distinguish file list by recognizing new line. An example of Filelist.txt:
+4. Create Filelist.txt in your local storage. The Filelist.txt should contain the list of files in MediaStorage, remember to include `/MediaStorage` but do not include `/storage/emulated/0/`. We will distinguish file list by recognizing new line. An example of Filelist.txt:
     ```text
     /MediaStorage/IMG-20220611-WA0001.jpg
     /MediaStorage/PTT-20220611-WA0001.opus
     ```
-5. In WhatsApp, choose a chat (any chat will do) and Export chat, share to AppManager. You will see content uris in AppManager, copy the content uri similar to `content://com.whatsapp.provider.media/export_chat/12345678901@s.whatsapp.net/67da380c-e0db-46cc-b5d6-a345d349878f3`. Put it into WhatsAppContentUri.txt.
-6. Replace the WhatsApp exported file with Full.txt. You need root to do it. Sample code:
-    ```shell
-    #!bin/sh
-    for file in /data/data/com.whatsapp/cache/export_chats/*
-    do
-        cp /storage/emulated/0/Full.txt $file
-    done
-    ```
+5. In WhatsApp, choose a chat (any chat will do) and Export chat, share to the modified Telegram.
+6. Import inside the Telegram app.
 
 ## Credit
 
