@@ -23,9 +23,9 @@
 -keep class org.telegram.tgnet.QuickAckDelegate { *; }
 -keep class org.telegram.tgnet.WriteToSocketDelegate { *; }
 -keep class com.google.android.exoplayer2.ext.** { *; }
--keep class com.google.android.exoplayer2.util.FlacStreamMetadata { *; }
+-keep class com.google.android.exoplayer2.extractor.FlacStreamMetadata { *; }
 -keep class com.google.android.exoplayer2.metadata.flac.PictureFrame { *; }
--keep class com.google.android.exoplayer2.decoder.SimpleOutputBuffer { *; }
+-keep class com.google.android.exoplayer2.decoder.SimpleDecoderOutputBuffer { *; }
 
 # https://developers.google.com/ml-kit/known-issues#android_issues
 -keep class com.google.mlkit.nl.languageid.internal.LanguageIdentificationJni { *; }
@@ -42,7 +42,7 @@
 }
 
 # Some members of this class are being accessed from native methods. Keep them unobfuscated.
--keep class com.google.android.exoplayer2.video.VideoDecoderOutputBuffer {
+-keep class com.google.android.exoplayer2.decoder.VideoDecoderOutputBuffer {
   *;
 }
 
@@ -92,6 +92,11 @@
 -keepclasseswithmembers class com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource$Factory {
   <init>(com.google.android.exoplayer2.upstream.DataSource$Factory);
 }
+
+# Huawei Services
+-keep class com.huawei.hianalytics.**{ *; }
+-keep class com.huawei.updatesdk.**{ *; }
+-keep class com.huawei.hms.**{ *; }
 
 # Don't warn about checkerframework and Kotlin annotations
 -dontwarn org.checkerframework.**

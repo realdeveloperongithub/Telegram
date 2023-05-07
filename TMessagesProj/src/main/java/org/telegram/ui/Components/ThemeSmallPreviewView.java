@@ -21,6 +21,7 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 
 import org.telegram.messenger.AndroidUtilities;
@@ -39,10 +40,14 @@ import org.telegram.messenger.SvgHelper;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.ActionBar.EmojiThemes;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.ChatBackgroundDrawable;
 
 import java.util.List;
 
 public class ThemeSmallPreviewView extends FrameLayout implements NotificationCenter.NotificationCenterDelegate {
+
+    private final static int PATTERN_BITMAP_MAXWIDTH = 120;
+    private final static int PATTERN_BITMAP_MAXHEIGHT = 140;
 
     public final static int TYPE_DEFAULT = 0;
     public final static int TYPE_GRID = 1;
@@ -76,6 +81,8 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
     private int currentType;
     int patternColor;
     private float selectionProgress;
+    ChatBackgroundDrawable chatBackgroundDrawable;
+    boolean attached;
 
     public ThemeSmallPreviewView(Context context, int currentAccount, Theme.ResourcesProvider resourcesProvider, int currentType) {
         super(context);
@@ -95,7 +102,7 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
 
         outlineBackgroundPaint.setStrokeWidth(AndroidUtilities.dp(2));
         outlineBackgroundPaint.setStyle(Paint.Style.STROKE);
-        outlineBackgroundPaint.setColor(0xFFE3E3E3);
+        outlineBackgroundPaint.setColor(0x20E3E3E3);
     }
 
     @Override
@@ -136,6 +143,13 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
         if (chatThemeItem == null) {
             super.dispatchDraw(canvas);
             return;
+        }
+        if (chatBackgroundDrawable != null) {
+            canvas.save();
+            canvas.clipPath(clipPath);
+            chatBackgroundDrawable.setBounds(0, 0, getMeasuredWidth(), getMeasuredHeight());
+            chatBackgroundDrawable.draw(canvas);
+            canvas.restore();
         }
         if (changeThemeProgress != 1 && animateOutThemeDrawable != null) {
             animateOutThemeDrawable.drawBackground(canvas, 1f);
@@ -189,6 +203,21 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
                 thumb = Emoji.getEmojiDrawable(item.chatTheme.getEmoticon());
             }
             backupImageView.setImage(ImageLocation.getForDocument(document), "50_50", thumb, null);
+            if (item.chatTheme.wallpaper != null) {
+                if (attached && chatBackgroundDrawable != null) {
+                    chatBackgroundDrawable.onDetachedFromWindow();
+                }
+                chatBackgroundDrawable = new ChatBackgroundDrawable(item.chatTheme.wallpaper, false, true);
+                chatBackgroundDrawable.setParent(this);
+                if (attached) {
+                    chatBackgroundDrawable.onAttachedToWindow();
+                }
+            } else {
+                if (attached && chatBackgroundDrawable != null) {
+                    chatBackgroundDrawable.onDetachedFromWindow();
+                }
+                chatBackgroundDrawable = null;
+            }
         }
 
         if (itemChanged || darkModeChanged) {
@@ -211,7 +240,7 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
                         if (result != null && result.first == themeId) {
                             if (item.previewDrawable instanceof MotionBackgroundDrawable) {
                                 MotionBackgroundDrawable motionBackgroundDrawable = (MotionBackgroundDrawable) item.previewDrawable;
-                                motionBackgroundDrawable.setPatternBitmap(intensity >= 0 ? 100 : -100, result.second);
+                                motionBackgroundDrawable.setPatternBitmap(intensity >= 0 ? 100 : -100, prescaleBitmap(result.second), true);
                                 motionBackgroundDrawable.setPatternColorFilter(patternColor);
                             }
                             invalidate();
@@ -231,10 +260,11 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
 
                     if (wallPaper != null && wallPaper.document != null) {
                         TLRPC.Document wallpaperDocument = wallPaper.document;
-                        final TLRPC.PhotoSize thumbSize = FileLoader.getClosestPhotoSizeWithSize(wallpaperDocument.thumbs, 120);
+                        final TLRPC.PhotoSize thumbSize = FileLoader.getClosestPhotoSizeWithSize(wallpaperDocument.thumbs, PATTERN_BITMAP_MAXWIDTH);
                         ImageLocation imageLocation = ImageLocation.getForDocument(thumbSize, wallpaperDocument);
                         ImageReceiver imageReceiver = new ImageReceiver();
-                        imageReceiver.setImage(imageLocation, "120_80", null, null, null, 1);
+                        imageReceiver.setAllowLoadingOnAttachedOnly(false);
+                        imageReceiver.setImage(imageLocation, PATTERN_BITMAP_MAXWIDTH + "_" + PATTERN_BITMAP_MAXHEIGHT, null, null, null, 1);
                         imageReceiver.setDelegate((receiver, set, thumb, memCache) -> {
                             ImageReceiver.BitmapHolder holder = receiver.getBitmapSafe();
                             if (!set || holder == null) {
@@ -244,9 +274,8 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
                             if (resultBitmap != null) {
                                 if (item.previewDrawable instanceof MotionBackgroundDrawable) {
                                     MotionBackgroundDrawable motionBackgroundDrawable = (MotionBackgroundDrawable) item.previewDrawable;
-                                    motionBackgroundDrawable.setPatternBitmap(wallPaper.settings == null || wallPaper.settings.intensity >= 0 ? 100 : -100, resultBitmap);
+                                    motionBackgroundDrawable.setPatternBitmap(wallPaper.settings == null || wallPaper.settings.intensity >= 0 ? 100 : -100, prescaleBitmap(resultBitmap), true);
                                     motionBackgroundDrawable.setPatternColorFilter(patternColor);
-
                                     invalidate();
                                 }
                             }
@@ -254,12 +283,16 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
                         ImageLoader.getInstance().loadImageForImageReceiver(imageReceiver);
                     }
                 } else if (accent != null && accent.info == null) {
+                    int intensity = (int) (accent.patternIntensity * 100);
+                    if (item.previewDrawable instanceof MotionBackgroundDrawable) {
+                        ((MotionBackgroundDrawable) item.previewDrawable).setPatternBitmap(intensity);
+                    }
                     ChatThemeController.chatThemeQueue.postRunnable(() -> {
-                        Bitmap bitmap = SvgHelper.getBitmap(R.raw.default_pattern, AndroidUtilities.dp(80), AndroidUtilities.dp(120), Color.BLACK, 3f);
+                        Bitmap bitmap = SvgHelper.getBitmap(R.raw.default_pattern, AndroidUtilities.dp(PATTERN_BITMAP_MAXWIDTH), AndroidUtilities.dp(PATTERN_BITMAP_MAXHEIGHT), Color.BLACK, AndroidUtilities.density);
                         AndroidUtilities.runOnUIThread(() -> {
                             if (item.previewDrawable instanceof MotionBackgroundDrawable) {
                                 MotionBackgroundDrawable motionBackgroundDrawable = (MotionBackgroundDrawable) item.previewDrawable;
-                                motionBackgroundDrawable.setPatternBitmap(100, bitmap);
+                                motionBackgroundDrawable.setPatternBitmap(intensity, prescaleBitmap(bitmap), true);
                                 motionBackgroundDrawable.setPatternColorFilter(patternColor);
                                 invalidate();
                             }
@@ -279,10 +312,15 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
                 backupImageView.getImageReceiver().getLottieAnimation().setCurrentFrame(0, false);
             }
         }
+
+        if (chatThemeItem.chatTheme == null || chatThemeItem.chatTheme.showAsDefaultStub) {
+            setContentDescription(LocaleController.getString("ChatNoTheme", R.string.ChatNoTheme));
+        } else {
+            setContentDescription(chatThemeItem.chatTheme.getEmoticon());
+        }
     }
 
     boolean isSelected;
-
 
     public void setSelected(boolean selected, boolean animated) {
         if (!animated) {
@@ -316,6 +354,22 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
             strokeAlphaAnimator.start();
         }
         isSelected = selected;
+    }
+
+    private Bitmap prescaleBitmap(Bitmap bitmap) {
+        if (bitmap == null) {
+            return null;
+        }
+        float scale = Math.max(AndroidUtilities.dp(PATTERN_BITMAP_MAXWIDTH) / bitmap.getWidth(), AndroidUtilities.dp(PATTERN_BITMAP_MAXHEIGHT) / bitmap.getHeight());
+        if (bitmap.getWidth() <= 0 || bitmap.getHeight() <= 0 || Math.abs(scale - 1f) < .0125f) {
+            return bitmap;
+        }
+        int w = (int) (bitmap.getWidth() * scale);
+        int h = (int) (bitmap.getHeight() * scale);
+        if (h <= 0 || w <= 0) {
+            return bitmap;
+        }
+        return Bitmap.createScaledBitmap(bitmap, w, h, true);
     }
 
     @Override
@@ -434,9 +488,11 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
             } else if (color1 != 0) {
                 drawable = new ColorDrawable(color1);
             } else if (item.themeInfo != null && (item.themeInfo.previewWallpaperOffset > 0 || item.themeInfo.pathToWallpaper != null)) {
-                Bitmap wallpaper = AndroidUtilities.getScaledBitmap(AndroidUtilities.dp(76), AndroidUtilities.dp(97), item.themeInfo.pathToWallpaper, item.themeInfo.pathToFile, item.themeInfo.previewWallpaperOffset);
+                Bitmap wallpaper = AndroidUtilities.getScaledBitmap(AndroidUtilities.dp(112), AndroidUtilities.dp(134), item.themeInfo.pathToWallpaper, item.themeInfo.pathToFile, item.themeInfo.previewWallpaperOffset);
                 if (wallpaper != null) {
-                    drawable = new BitmapDrawable(wallpaper);
+                    BitmapDrawable bitmapDrawable = new BitmapDrawable(wallpaper);
+                    bitmapDrawable.setFilterBitmap(true);
+                    drawable = bitmapDrawable;
                 }
             } else {
                 drawable = new MotionBackgroundDrawable(0xffdbddbb, 0xff6ba587, 0xffd5d88d, 0xff88b884, true);
@@ -467,9 +523,8 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
         return textLayout;
     }
 
-    private int getThemedColor(String key) {
-        Integer color = resourcesProvider != null ? resourcesProvider.getColor(key) : null;
-        return color != null ? color : Theme.getColor(key);
+    private int getThemedColor(int key) {
+        return Theme.getColor(key, resourcesProvider);
     }
 
 
@@ -531,10 +586,12 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
                 previewDrawable.setAlpha((int) (255 * alpha));
                 previewDrawable.draw(canvas);
                 if (previewDrawable instanceof ColorDrawable || (previewDrawable instanceof MotionBackgroundDrawable && ((MotionBackgroundDrawable) previewDrawable).isOneColor())) {
-                    outlineBackgroundPaint.setAlpha((int) (255 * alpha));
+                    int wasAlpha = outlineBackgroundPaint.getAlpha();
+                    outlineBackgroundPaint.setAlpha((int) (wasAlpha * alpha));
                     float padding = INNER_RECT_SPACE;
                     AndroidUtilities.rectTmp.set(padding, padding, getWidth() - padding, getHeight() - padding);
                     canvas.drawRoundRect(AndroidUtilities.rectTmp, INNER_RADIUS, INNER_RADIUS, outlineBackgroundPaint);
+                    outlineBackgroundPaint.setAlpha(wasAlpha);
                 }
                 canvas.restore();
             } else {
@@ -558,7 +615,7 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
             inBubblePaint.setAlpha((int) (255 * alpha));
             rectF.set(INNER_RECT_SPACE, INNER_RECT_SPACE, getWidth() - INNER_RECT_SPACE, getHeight() - INNER_RECT_SPACE);
 
-            if (chatThemeItem.chatTheme == null || chatThemeItem.chatTheme.showAsDefaultStub) {
+            if (chatThemeItem.chatTheme == null || (chatThemeItem.chatTheme.showAsDefaultStub && chatThemeItem.chatTheme.wallpaper == null)) {
                 canvas.drawRoundRect(rectF, INNER_RADIUS, INNER_RADIUS, backgroundFillPaint);
                 canvas.save();
                 StaticLayout textLayout = getNoThemeStaticLayout();
@@ -621,12 +678,20 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         NotificationCenter.getGlobalInstance().addObserver(this, NotificationCenter.emojiLoaded);
+        attached = true;
+        if (chatBackgroundDrawable != null) {
+            chatBackgroundDrawable.onAttachedToWindow();
+        }
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.emojiLoaded);
+        attached = false;
+        if (chatBackgroundDrawable != null) {
+            chatBackgroundDrawable.onDetachedFromWindow();
+        }
     }
 
     @Override
@@ -634,5 +699,12 @@ public class ThemeSmallPreviewView extends FrameLayout implements NotificationCe
         if (id == NotificationCenter.emojiLoaded) {
             invalidate();
         }
+    }
+
+    @Override
+    public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
+        super.onInitializeAccessibilityNodeInfo(info);
+        info.setEnabled(true);
+        info.setSelected(isSelected);
     }
 }

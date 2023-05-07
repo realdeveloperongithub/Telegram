@@ -9,7 +9,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.RectF;
@@ -66,19 +65,19 @@ public class UsersAlertBase extends BottomSheet {
     protected boolean needSnapToTop = true;
     protected boolean isEmptyViewVisible = true;
 
-    protected String keyScrollUp = Theme.key_sheet_scrollUp;
-    protected String keyListSelector = Theme.key_listSelector;
-    protected String keySearchBackground = Theme.key_dialogSearchBackground;
-    protected String keyInviteMembersBackground = Theme.key_windowBackgroundWhite;
-    protected String keyListViewBackground = Theme.key_windowBackgroundWhite;
-    protected String keyActionBarUnscrolled = Theme.key_windowBackgroundWhite;
-    protected String keyNameText = Theme.key_windowBackgroundWhiteBlackText;
-    protected String keyLastSeenText = Theme.key_windowBackgroundWhiteGrayText;
-    protected String keyLastSeenTextUnscrolled = Theme.key_windowBackgroundWhiteGrayText;
-    protected String keySearchPlaceholder = Theme.key_dialogSearchHint;
-    protected String keySearchText = Theme.key_dialogSearchText;
-    protected String keySearchIcon = Theme.key_dialogSearchIcon;
-    protected String keySearchIconUnscrolled = Theme.key_dialogSearchIcon;
+    protected int keyScrollUp = Theme.key_sheet_scrollUp;
+    protected int keyListSelector = Theme.key_listSelector;
+    protected int keySearchBackground = Theme.key_dialogSearchBackground;
+    protected int keyInviteMembersBackground = Theme.key_windowBackgroundWhite;
+    protected int keyListViewBackground = Theme.key_windowBackgroundWhite;
+    protected int keyActionBarUnscrolled = Theme.key_windowBackgroundWhite;
+    protected int keyNameText = Theme.key_windowBackgroundWhiteBlackText;
+    protected int keyLastSeenText = Theme.key_windowBackgroundWhiteGrayText;
+    protected int keyLastSeenTextUnscrolled = Theme.key_windowBackgroundWhiteGrayText;
+    protected int keySearchPlaceholder = Theme.key_dialogSearchHint;
+    protected int keySearchText = Theme.key_dialogSearchText;
+    protected int keySearchIcon = Theme.key_dialogSearchIcon;
+    protected int keySearchIconUnscrolled = Theme.key_dialogSearchIcon;
     protected final FillLastLinearLayoutManager layoutManager;
 
 
@@ -118,10 +117,6 @@ public class UsersAlertBase extends BottomSheet {
         containerView.addView(emptyView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.LEFT | Gravity.TOP, 0, 58 + 4, 0, 0));
 
         listView = new RecyclerListView(context) {
-            @Override
-            protected boolean allowSelectChildAtPosition(float x, float y) {
-                return isAllowSelectChildAtPosition(x, y);
-            }
 
             @Override
             public void setTranslationY(float translationY) {
@@ -131,7 +126,7 @@ public class UsersAlertBase extends BottomSheet {
             }
 
             @Override
-            protected boolean emptyViewIsVisible() {
+            public boolean emptyViewIsVisible() {
                 if (getAdapter() == null) {
                     return false;
                 }
@@ -182,7 +177,7 @@ public class UsersAlertBase extends BottomSheet {
         setColorProgress(0.0f);
 
         listView.setEmptyView(emptyView);
-        listView.setAnimateEmptyView(true, 0);
+        listView.setAnimateEmptyView(true, RecyclerListView.EMPTY_VIEW_ANIMATION_TYPE_ALPHA);
     }
 
     @Override
@@ -193,10 +188,6 @@ public class UsersAlertBase extends BottomSheet {
 
     protected ContainerView createContainerView(Context context) {
         return new ContainerView(context);
-    }
-
-    protected boolean isAllowSelectChildAtPosition(float x, float y) {
-        return y >= AndroidUtilities.dp(58) + (Build.VERSION.SDK_INT >= 21 ? AndroidUtilities.statusBarHeight : 0);
     }
 
     protected void updateColorKeys() {
@@ -247,7 +238,7 @@ public class UsersAlertBase extends BottomSheet {
                 @Override
                 public boolean dispatchTouchEvent(MotionEvent event) {
                     MotionEvent e = MotionEvent.obtain(event);
-                    e.setLocation(e.getRawX(), e.getRawY() - containerView.getTranslationY());
+                    e.setLocation(e.getRawX(), e.getRawY() - listView.getMeasuredHeight());
                     if (e.getAction() == MotionEvent.ACTION_UP) {
                         e.setAction(MotionEvent.ACTION_CANCEL);
                     }
@@ -299,7 +290,7 @@ public class UsersAlertBase extends BottomSheet {
                     if (TextUtils.isEmpty(text) && listView != null && listView.getAdapter() != listViewAdapter) {
                         listView.setAnimateEmptyView(false, 0);
                         listView.setAdapter(listViewAdapter);
-                        listView.setAnimateEmptyView(true, 0);
+                        listView.setAnimateEmptyView(true, RecyclerListView.EMPTY_VIEW_ANIMATION_TYPE_ALPHA);
                         if (oldItemsCount == 0) {
                             showItemsAnimated(0);
                         }
@@ -360,6 +351,7 @@ public class UsersAlertBase extends BottomSheet {
         backgroundColor = AndroidUtilities.getOffsetColor(Theme.getColor(keyInviteMembersBackground), Theme.getColor(keyListViewBackground), progress, 1.0f);
         shadowDrawable.setColorFilter(new PorterDuffColorFilter(backgroundColor, PorterDuff.Mode.MULTIPLY));
         frameLayout.setBackgroundColor(backgroundColor);
+        fixNavigationBar(backgroundColor);
         navBarColor = backgroundColor;
         listView.setGlowColor(backgroundColor);
 
@@ -628,11 +620,22 @@ public class UsersAlertBase extends BottomSheet {
             canvas.drawRoundRect(rect, AndroidUtilities.dp(2), AndroidUtilities.dp(2), Theme.dialogs_onlineCirclePaint);
 
             if (statusBarHeight > 0) {
-                int finalColor = Color.argb(0xff, (int) (Color.red(backgroundColor) * 0.8f), (int) (Color.green(backgroundColor) * 0.8f), (int) (Color.blue(backgroundColor) * 0.8f));
-                Theme.dialogs_onlineCirclePaint.setColor(finalColor);
+                Theme.dialogs_onlineCirclePaint.setColor(backgroundColor);
                 canvas.drawRect(backgroundPaddingLeft, AndroidUtilities.statusBarHeight - statusBarHeight - getTranslationY(), getMeasuredWidth() - backgroundPaddingLeft, AndroidUtilities.statusBarHeight - getTranslationY(), Theme.dialogs_onlineCirclePaint);
             }
+            updateLightStatusBar(statusBarHeight > AndroidUtilities.statusBarHeight / 2);
             canvas.restore();
+        }
+
+        private Boolean statusBarOpen;
+        private void updateLightStatusBar(boolean open) {
+            if (statusBarOpen != null && statusBarOpen == open) {
+                return;
+            }
+            boolean openBgLight = AndroidUtilities.computePerceivedBrightness(getThemedColor(Theme.key_dialogBackground)) > .721f;
+            boolean closedBgLight = AndroidUtilities.computePerceivedBrightness(Theme.blendOver(getThemedColor(Theme.key_actionBarDefault), 0x33000000)) > .721f;
+            boolean isLight = (statusBarOpen = open) ? openBgLight : closedBgLight;
+            AndroidUtilities.setLightStatusBar(getWindow(), isLight);
         }
 
         @Override

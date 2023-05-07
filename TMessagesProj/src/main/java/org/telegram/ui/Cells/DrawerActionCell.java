@@ -13,24 +13,29 @@ import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.RectF;
-import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.FileLog;
+import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
 import org.telegram.messenger.UserConfig;
 import org.telegram.ui.ActionBar.Theme;
+import org.telegram.ui.Components.AnimatedTextView;
+import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
+import org.telegram.ui.Components.RLottieImageView;
 
 import java.util.Set;
 
 public class DrawerActionCell extends FrameLayout {
 
+    private ImageView imageView;
     private TextView textView;
     private int currentId;
     private RectF rect = new RectF();
@@ -38,18 +43,28 @@ public class DrawerActionCell extends FrameLayout {
     public DrawerActionCell(Context context) {
         super(context);
 
+        imageView = new ImageView(context);
+        imageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chats_menuItemIcon), PorterDuff.Mode.SRC_IN));
+
         textView = new TextView(context);
         textView.setTextColor(Theme.getColor(Theme.key_chats_menuItemText));
         textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
-        textView.setLines(1);
-        textView.setMaxLines(1);
-        textView.setSingleLine(true);
-        textView.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-        textView.setCompoundDrawablePadding(AndroidUtilities.dp(29));
-        addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.LEFT | Gravity.TOP, 19, 0, 16, 0));
+        textView.setGravity(Gravity.CENTER_VERTICAL);
+        toggleRTL(true);
 
         setWillNotDraw(false);
+    }
+
+    private boolean wasRTL;
+
+    public void toggleRTL(boolean force) {
+        if (wasRTL != LocaleController.isRTL || force) {
+            wasRTL = LocaleController.isRTL;
+            removeAllViews();
+            addView(imageView, LayoutHelper.createFrame(24, 24, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? 0 : 19, 12, LocaleController.isRTL ? 19 : 0, 0));
+            addView(textView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, (LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT) | Gravity.TOP, LocaleController.isRTL ? 16 : 72, 0, LocaleController.isRTL ? 72 : 16, 0));
+        }
     }
 
     @Override
@@ -61,7 +76,7 @@ public class DrawerActionCell extends FrameLayout {
             if (suggestions.contains("VALIDATE_PHONE_NUMBER") || suggestions.contains("VALIDATE_PASSWORD")) {
                 int countTop = AndroidUtilities.dp(12.5f);
                 int countWidth = AndroidUtilities.dp(9);
-                int countLeft = getMeasuredWidth() - countWidth - AndroidUtilities.dp(25);
+                int countLeft = LocaleController.isRTL ? countWidth + AndroidUtilities.dp(25) : getMeasuredWidth() - countWidth - AndroidUtilities.dp(25);
 
                 int x = countLeft - AndroidUtilities.dp(5.5f);
                 rect.set(x, countTop, x + countWidth + AndroidUtilities.dp(14), countTop + AndroidUtilities.dp(23));
@@ -88,14 +103,20 @@ public class DrawerActionCell extends FrameLayout {
     }
 
     public void setTextAndIcon(int id, String text, int resId) {
+        toggleRTL(false);
         currentId = id;
         try {
             textView.setText(text);
-            Drawable drawable = getResources().getDrawable(resId).mutate();
-            if (drawable != null) {
-                drawable.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_chats_menuItemIcon), PorterDuff.Mode.MULTIPLY));
-            }
-            textView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+            imageView.setImageResource(resId);
+        } catch (Throwable e) {
+            FileLog.e(e);
+        }
+    }
+
+    public void updateTextAndIcon(String text, int resId) {
+        try {
+            textView.setText(text);
+            imageView.setImageResource(resId);
         } catch (Throwable e) {
             FileLog.e(e);
         }
@@ -104,7 +125,10 @@ public class DrawerActionCell extends FrameLayout {
     @Override
     public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
+        info.setClassName("android.widget.Button");
         info.addAction(AccessibilityNodeInfo.ACTION_CLICK);
         info.addAction(AccessibilityNodeInfo.ACTION_LONG_CLICK);
+        info.setText(textView.getText());
+        info.setClassName(TextView.class.getName());
     }
 }

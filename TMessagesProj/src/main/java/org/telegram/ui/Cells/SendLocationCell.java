@@ -57,6 +57,8 @@ public class SendLocationCell extends FrameLayout {
 
         imageView = new ImageView(context);
 
+        setBackground(Theme.AdaptiveRipple.rect());
+
         imageView.setTag(live ? Theme.key_location_sendLiveLocationBackground + Theme.key_location_sendLiveLocationIcon : Theme.key_location_sendLocationBackground + Theme.key_location_sendLocationIcon);
         Drawable circle = Theme.createSimpleSelectorCircleDrawable(AndroidUtilities.dp(42), getThemedColor(live ? Theme.key_location_sendLiveLocationBackground : Theme.key_location_sendLocationBackground), getThemedColor(live ? Theme.key_location_sendLiveLocationBackground : Theme.key_location_sendLocationBackground));
         if (live) {
@@ -180,8 +182,7 @@ public class SendLocationCell extends FrameLayout {
         canvas.drawText(text, rect.centerX() - size / 2, AndroidUtilities.dp(37), Theme.chat_livePaint);
     }
 
-    private int getThemedColor(String key) {
-        Integer color = resourcesProvider != null ? resourcesProvider.getColor(key) : null;
-        return color != null ? color : Theme.getColor(key);
+    private int getThemedColor(int key) {
+        return Theme.getColor(key, resourcesProvider);
     }
 }

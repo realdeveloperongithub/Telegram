@@ -17,15 +17,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import androidx.collection.LongSparseArray;
+import androidx.recyclerview.widget.RecyclerView;
+
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.ContactsController;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
+import org.telegram.messenger.MessagesController;
+import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLRPC;
-import org.telegram.messenger.ContactsController;
-import org.telegram.messenger.MessagesController;
-import org.telegram.messenger.R;
 import org.telegram.ui.ActionBar.ActionBar;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Cells.DividerCell;
@@ -42,9 +45,6 @@ import org.telegram.ui.Components.RecyclerListView;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-
-import androidx.collection.LongSparseArray;
-import androidx.recyclerview.widget.RecyclerView;
 
 public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
 
@@ -77,9 +77,13 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
         disableSections = value;
     }
 
+    public static final int SORT_TYPE_NONE = 0;
+    public static final int SORT_TYPE_BY_NAME = 1;
+    public static final int SORT_TYPE_BY_TIME = 2;
+
     public void setSortType(int value, boolean force) {
         sortType = value;
-        if (sortType == 2) {
+        if (sortType == SORT_TYPE_BY_TIME) {
             if (onlineContacts == null || force) {
                 onlineContacts = new ArrayList<>(ContactsController.getInstance(currentAccount).contacts);
                 long selfId = UserConfig.getInstance(currentAccount).clientUserId;
@@ -173,7 +177,7 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
             if (section == 0) {
                 return null;
             } else {
-                if (sortType == 2) {
+                if (sortType == SORT_TYPE_BY_TIME) {
                     if (section == 1) {
                         if (position < onlineContacts.size()) {
                             return MessagesController.getInstance(currentAccount).getUser(onlineContacts.get(position).user_id);
@@ -221,7 +225,7 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
                 if (isEmpty) {
                     return false;
                 }
-                if (sortType == 2) {
+                if (sortType == SORT_TYPE_BY_TIME) {
                     if (section == 1) {
                         return row < onlineContacts.size();
                     }
@@ -240,7 +244,7 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
     public int getSectionCount() {
         int count;
         isEmpty = false;
-        if (sortType == 2) {
+        if (sortType == SORT_TYPE_BY_TIME) {
             count = 1;
             isEmpty = onlineContacts.isEmpty();
         } else {
@@ -293,7 +297,7 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
                 if (isEmpty) {
                     return 1;
                 }
-                if (sortType == 2) {
+                if (sortType == SORT_TYPE_BY_TIME) {
                     if (section == 1) {
                         return onlineContacts.isEmpty() ? 0 : onlineContacts.size() + 1;
                     }
@@ -324,7 +328,7 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
             view = new LetterSectionCell(mContext);
         }
         LetterSectionCell cell = (LetterSectionCell) view;
-        if (sortType == 2 || disableSections || isEmpty) {
+        if (sortType == SORT_TYPE_BY_TIME || disableSections || isEmpty) {
             cell.setLetter("");
         } else {
             if (onlyUsers != 0 && !isAdmin) {
@@ -398,7 +402,7 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
             case 5:
             default:
                 view = new ShadowSectionCell(mContext);
-                Drawable drawable = Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow);
+                Drawable drawable = Theme.getThemedDrawableByKey(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow);
                 CombinedDrawable combinedDrawable = new CombinedDrawable(new ColorDrawable(Theme.getColor(Theme.key_windowBackgroundGray)), drawable);
                 combinedDrawable.setFullsize(true);
                 view.setBackgroundDrawable(combinedDrawable);
@@ -412,9 +416,9 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
         switch (holder.getItemViewType()) {
             case 0:
                 UserCell userCell = (UserCell) holder.itemView;
-                userCell.setAvatarPadding(sortType == 2 || disableSections ? 6 : 58);
+                userCell.setAvatarPadding(sortType == SORT_TYPE_BY_TIME || disableSections ? 6 : 58);
                 ArrayList<TLRPC.TL_contact> arr;
-                if (sortType == 2) {
+                if (sortType == SORT_TYPE_BY_TIME) {
                     arr = onlineContacts;
                 } else {
                     HashMap<String, ArrayList<TLRPC.TL_contact>> usersSectionsDict = onlyUsers == 2 ? ContactsController.getInstance(currentAccount).usersMutualSectionsDict : ContactsController.getInstance(currentAccount).usersSectionsDict;
@@ -439,23 +443,23 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
                 if (section == 0) {
                     if (needPhonebook) {
                         if (position == 0) {
-                            textCell.setTextAndIcon(LocaleController.getString("InviteFriends", R.string.InviteFriends), R.drawable.menu_invite, false);
+                            textCell.setTextAndIcon(LocaleController.getString("InviteFriends", R.string.InviteFriends), R.drawable.msg_invite, false);
                         } else if (position == 1) {
-                            textCell.setTextAndIcon(LocaleController.getString("AddPeopleNearby", R.string.AddPeopleNearby), R.drawable.menu_location, false);
+                            textCell.setTextAndIcon(LocaleController.getString("AddPeopleNearby", R.string.AddPeopleNearby), R.drawable.msg_location, false);
                         }
                     } else if (isAdmin) {
                         if (isChannel) {
-                            textCell.setTextAndIcon(LocaleController.getString("ChannelInviteViaLink", R.string.ChannelInviteViaLink), R.drawable.profile_link, false);
+                            textCell.setTextAndIcon(LocaleController.getString("ChannelInviteViaLink", R.string.ChannelInviteViaLink), R.drawable.msg_link2, false);
                         } else {
-                            textCell.setTextAndIcon(LocaleController.getString("InviteToGroupByLink", R.string.InviteToGroupByLink), R.drawable.profile_link, false);
+                            textCell.setTextAndIcon(LocaleController.getString("InviteToGroupByLink", R.string.InviteToGroupByLink), R.drawable.msg_link2, false);
                         }
                     } else {
                         if (position == 0) {
-                            textCell.setTextAndIcon(LocaleController.getString("NewGroup", R.string.NewGroup), R.drawable.menu_groups, false);
+                            textCell.setTextAndIcon(LocaleController.getString("NewGroup", R.string.NewGroup), R.drawable.msg_groups, false);
                         } else if (position == 1) {
-                            textCell.setTextAndIcon(LocaleController.getString("NewSecretChat", R.string.NewSecretChat), R.drawable.menu_secret, false);
+                            textCell.setTextAndIcon(LocaleController.getString("NewSecretChat", R.string.NewSecretChat), R.drawable.msg_secret, false);
                         } else if (position == 2) {
-                            textCell.setTextAndIcon(LocaleController.getString("NewChannel", R.string.NewChannel), R.drawable.menu_broadcast, false);
+                            textCell.setTextAndIcon(LocaleController.getString("NewChannel", R.string.NewChannel), R.drawable.msg_channel, false);
                         }
                     }
                 } else {
@@ -471,9 +475,9 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
                 break;
             case 2:
                 GraySectionCell sectionCell = (GraySectionCell) holder.itemView;
-                if (sortType == 0) {
+                if (sortType == SORT_TYPE_NONE) {
                     sectionCell.setText(LocaleController.getString("Contacts", R.string.Contacts));
-                } else if (sortType == 1) {
+                } else if (sortType == SORT_TYPE_BY_NAME) {
                     sectionCell.setText(LocaleController.getString("SortedByName", R.string.SortedByName));
                 } else {
                     sectionCell.setText(LocaleController.getString("SortedByLastSeen", R.string.SortedByLastSeen));
@@ -509,7 +513,7 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
                 if (isEmpty) {
                     return 4;
                 }
-                if (sortType == 2) {
+                if (sortType == SORT_TYPE_BY_TIME) {
                     if (section == 1) {
                         return position < onlineContacts.size() ? 0 : 3;
                     }
@@ -526,7 +530,7 @@ public class ContactsAdapter extends RecyclerListView.SectionsAdapter {
 
     @Override
     public String getLetter(int position) {
-        if (sortType == 2 || isEmpty) {
+        if (sortType == SORT_TYPE_BY_TIME || isEmpty) {
             return null;
         }
         ArrayList<String> sortedUsersSectionsArray = onlyUsers == 2 ? ContactsController.getInstance(currentAccount).sortedUsersMutualSectionsArray : ContactsController.getInstance(currentAccount).sortedUsersSectionsArray;

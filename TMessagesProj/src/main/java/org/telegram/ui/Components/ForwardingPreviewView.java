@@ -166,7 +166,7 @@ public class ForwardingPreviewView extends FrameLayout {
                     cell.drawCheckBox(canvas);
                     canvas.save();
                     canvas.translate(cell.getX(), cell.getY());
-                    cell.drawMessageText(canvas, cell.getMessageObject().textLayoutBlocks, true, 1f, false);
+                    cell.drawMessageText(canvas, cell.getMessageObject().textLayoutBlocks, cell.getMessageObject().textXOffset, true, 1f, false);
 
                     if (cell.getCurrentMessagesGroup() != null || cell.getTransitionParams().animateBackgroundBoundsInner) {
                         cell.drawNamesLayout(canvas, 1f);
@@ -589,7 +589,7 @@ public class ForwardingPreviewView extends FrameLayout {
 
         sendMessagesView = new ActionBarMenuSubItem(context, false, true, resourcesProvider);
         buttonsLayout2.addView(sendMessagesView, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48));
-        sendMessagesView.setTextAndIcon(LocaleController.getString("ForwardSendMessages", R.string.ForwardSendMessages), R.drawable.msg_forward_send);
+        sendMessagesView.setTextAndIcon(LocaleController.getString("ForwardSendMessages", R.string.ForwardSendMessages), R.drawable.msg_send);
 
         if (forwardingMessagesParams.hasSenders) {
             actionItems.add(showSendersNameView);
@@ -1028,8 +1028,7 @@ public class ForwardingPreviewView extends FrameLayout {
         return groupedMessages;
     }
 
-    private int getThemedColor(String key) {
-        Integer color = resourcesProvider != null ? resourcesProvider.getColor(key) : null;
-        return color != null ? color : Theme.getColor(key);
+    private int getThemedColor(int key) {
+        return Theme.getColor(key, resourcesProvider);
     }
 }

@@ -99,6 +99,7 @@ public class TextStyleSpan extends MetricAffectingSpan {
     public final static int FLAG_STYLE_URL = 128;
     public final static int FLAG_STYLE_SPOILER = 256;
     public final static int FLAG_STYLE_SPOILER_REVEALED = 512;
+    public final static int FLAG_STYLE_TEXT_URL = 1024;
 
 
     public TextStyleSpan(TextStyleRun run) {
@@ -135,6 +136,10 @@ public class TextStyleSpan extends MetricAffectingSpan {
 
     public boolean isSpoiler() {
         return (style.flags & FLAG_STYLE_SPOILER) > 0;
+    }
+
+    public boolean isSpoilerRevealed() {
+        return (style.flags & FLAG_STYLE_SPOILER_REVEALED) > 0;
     }
 
     public void setSpoilerRevealed(boolean b) {

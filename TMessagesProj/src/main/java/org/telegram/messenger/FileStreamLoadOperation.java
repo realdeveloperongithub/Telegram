@@ -9,6 +9,7 @@
 package org.telegram.messenger;
 
 import android.net.Uri;
+
 import androidx.annotation.Nullable;
 
 import com.google.android.exoplayer2.C;
@@ -19,6 +20,7 @@ import com.google.android.exoplayer2.upstream.TransferListener;
 import org.telegram.tgnet.TLRPC;
 
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.concurrent.CountDownLatch;
@@ -30,12 +32,13 @@ public class FileStreamLoadOperation extends BaseDataSource implements FileLoadO
     private Uri uri;
     private long bytesRemaining;
     private boolean opened;
-    private int currentOffset;
+    private long currentOffset;
     private CountDownLatch countDownLatch;
     private RandomAccessFile file;
     private TLRPC.Document document;
     private Object parentObject;
     private int currentAccount;
+    File currentFile;
 
     public FileStreamLoadOperation() {
         super(/* isNetwork= */ false);
@@ -57,7 +60,7 @@ public class FileStreamLoadOperation extends BaseDataSource implements FileLoadO
         document = new TLRPC.TL_document();
         document.access_hash = Utilities.parseLong(uri.getQueryParameter("hash"));
         document.id = Utilities.parseLong(uri.getQueryParameter("id"));
-        document.size = Utilities.parseInt(uri.getQueryParameter("size"));
+        document.size = Utilities.parseLong(uri.getQueryParameter("size"));
         document.dc_id = Utilities.parseInt(uri.getQueryParameter("dc"));
         document.mime_type = uri.getQueryParameter("mime");
         document.file_reference = Utilities.hexToBytes(uri.getQueryParameter("reference"));
@@ -69,7 +72,7 @@ public class FileStreamLoadOperation extends BaseDataSource implements FileLoadO
         } else if (document.mime_type.startsWith("audio")) {
             document.attributes.add(new TLRPC.TL_documentAttributeAudio());
         }
-        loadOperation = FileLoader.getInstance(currentAccount).loadStreamFile(this, document, null, parentObject, currentOffset = (int) dataSpec.position, false);
+        loadOperation = FileLoader.getInstance(currentAccount).loadStreamFile(this, document, null, parentObject, currentOffset = dataSpec.position, false, FileLoader.PRIORITY_HIGH);
         bytesRemaining = dataSpec.length == C.LENGTH_UNSET ? document.size - dataSpec.position : dataSpec.length;
         if (bytesRemaining < 0) {
             throw new EOFException();
@@ -77,7 +80,7 @@ public class FileStreamLoadOperation extends BaseDataSource implements FileLoadO
         opened = true;
         transferStarted(dataSpec);
         if (loadOperation != null) {
-            file = new RandomAccessFile(loadOperation.getCurrentFile(), "r");
+            file = new RandomAccessFile(currentFile = loadOperation.getCurrentFile(), "r");
             file.seek(currentOffset);
         }
         return bytesRemaining;
@@ -96,11 +99,18 @@ public class FileStreamLoadOperation extends BaseDataSource implements FileLoadO
                     readLength = (int) bytesRemaining;
                 }
                 while (availableLength == 0 && opened) {
-                    availableLength = loadOperation.getDownloadedLengthFromOffset(currentOffset, readLength)[0];
+                    availableLength = (int) loadOperation.getDownloadedLengthFromOffset(currentOffset, readLength)[0];
                     if (availableLength == 0) {
-                        FileLoader.getInstance(currentAccount).loadStreamFile(this, document, null, parentObject, currentOffset, false);
                         countDownLatch = new CountDownLatch(1);
-                        countDownLatch.await();
+                        FileLoadOperation loadOperation = FileLoader.getInstance(currentAccount).loadStreamFile(this, document, null, parentObject, currentOffset, false, FileLoader.PRIORITY_HIGH);
+                        if (this.loadOperation != loadOperation) {
+                            this.loadOperation.removeStreamListener(this);
+                            this.loadOperation = loadOperation;
+                        }
+                        if (countDownLatch != null) {
+                            countDownLatch.await();
+                            countDownLatch = null;
+                        }
                     }
                 }
                 if (!opened) {
@@ -141,14 +151,18 @@ public class FileStreamLoadOperation extends BaseDataSource implements FileLoadO
             transferEnded();
         }
         if (countDownLatch != null) {
+         //   FileLog.d("FileStreamLoadOperation count down");
             countDownLatch.countDown();
+            countDownLatch = null;
         }
     }
 
     @Override
     public void newDataAvailable() {
         if (countDownLatch != null) {
+          //  FileLog.d("FileStreamLoadOperation count down");
             countDownLatch.countDown();
+            countDownLatch = null;
         }
     }
 }
