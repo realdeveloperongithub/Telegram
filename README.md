@@ -3,7 +3,7 @@
 2. Change `APP_ID` and `APP_HASH` in `Telegram/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java`
 3. Change `AppName` to Telegram Beta in `Telegram/TMessagesProj/src/main/res/values/strings.xml`
 4. In `Telegram/TMessagesProj/build.gradle`, add 
-    ```Groovy
+    ```gradle
     implementation 'com.blankj:utilcodex:1.31.0'
     ```
 5. In `Telegram/TMessagesProj/src/main/AndroidManifest.xml`, add
