@@ -2,7 +2,10 @@
 1. `git clone --recursive https://github.com/DrKLO/Telegram.git`
 2. Change `APP_ID` and `APP_HASH` in `Telegram/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java`
 3. Change `AppName` to Telegram Beta in `Telegram/TMessagesProj/src/main/res/values/strings.xml`
-4. In `Telegram/TMessagesProj/build.gradle`, add `implementation 'com.blankj:utilcodex:1.31.0'`
+4. In `Telegram/TMessagesProj/build.gradle`, add 
+    ```gradle
+    implementation 'com.blankj:utilcodex:1.31.0'
+    ```
 5. In `Telegram/TMessagesProj/src/main/AndroidManifest.xml`, add
     ```xml
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
@@ -48,9 +51,10 @@
 
 ## How to use
 1. Say we have the chat log you want to import (WhatsAppFull.txt) in WhatsApp format and a MediaStorage folder which contains the multimedia files.
-2. Put Full.txt and MediaStorage under your local storage (typically `/storage/emulated/0/`).
-3. Create Filelist.txt in your local storage. The Filelist.txt should contain the list of files in MediaStorage, remember to include `/MediaStorage` but do not include `/storage/emulated/0/`. We will distinguish file list by recognizing new line. An example of Filelist.txt:
+2. Put WhatsAppFull.txt and MediaStorage under your local storage (typically `/storage/emulated/0/`).
+3. Create Filelist.txt in your local storage. The Filelist.txt should contain the list of files in MediaStorage, remember to include `/MediaStorage` but do not include `/storage/emulated/0/`. We will distinguish file list by recognizing new line. Remember to add the WhatsAppFull.txt in the list. Here's an example of Filelist.txt:
     ```text
+    /WhatsAppFull.txt
     /MediaStorage/IMG-20220611-WA0001.jpg
     /MediaStorage/PTT-20220611-WA0001.opus
     ```
