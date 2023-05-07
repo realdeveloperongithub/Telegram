@@ -21,6 +21,7 @@
     import com.blankj.utilcode.util.FileUtils;
     import com.blankj.utilcode.util.UriUtils;
     import android.content.ClipData;
+    import android.os.Environment;
     ```
     Below `if ((flags & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {`, add
     ```java
