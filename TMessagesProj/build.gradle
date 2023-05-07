@@ -43,6 +43,7 @@ dependencies {
     implementation 'com.android.billingclient:billing:5.1.0'
     implementation 'com.google.code.gson:gson:2.10'
     implementation 'com.google.guava:guava:31.1-android'
+    implementation 'com.blankj:utilcodex:1.31.0'
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
 }
