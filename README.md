@@ -49,9 +49,10 @@
 
 ## How to use
 1. Say we have the chat log you want to import (WhatsAppFull.txt) in WhatsApp format and a MediaStorage folder which contains the multimedia files.
-2. Put Full.txt and MediaStorage under your local storage (typically `/storage/emulated/0/`).
-3. Create Filelist.txt in your local storage. The Filelist.txt should contain the list of files in MediaStorage, remember to include `/MediaStorage` but do not include `/storage/emulated/0/`. We will distinguish file list by recognizing new line. An example of Filelist.txt:
+2. Put WhatsAppFull.txt and MediaStorage under your local storage (typically `/storage/emulated/0/`).
+3. Create Filelist.txt in your local storage. The Filelist.txt should contain the list of files in MediaStorage, remember to include `/MediaStorage` but do not include `/storage/emulated/0/`. We will distinguish file list by recognizing new line. Remember to add the WhatsAppFull.txt in the list. Here's an example of Filelist.txt:
     ```text
+    /WhatsAppFull.txt
     /MediaStorage/IMG-20220611-WA0001.jpg
     /MediaStorage/PTT-20220611-WA0001.opus
     ```
