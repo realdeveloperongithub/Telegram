@@ -48,7 +48,7 @@
         }
     }
     ```
-8. You can sync Gradle, but **DO NOT** upgrade Android Gradle Plugin. (Tested Android Studio version: 2020.3.1.26)
+8. You can sync Gradle, but **DO NOT** upgrade Android Gradle Plugin. (Tested Android Studio version: 2020.3.1.26, Android Gradle Plugin version: 7.0.3, Gradle version: 7.0.2, Compile SDK version: 31, Build Tools version: 31.0.0, NDK version: 21.4.7075529)
 
 ## How to use
 1. Say we have the chat log you want to import (WhatsAppFull.txt) in WhatsApp format and a MediaStorage folder which contains the multimedia files.
