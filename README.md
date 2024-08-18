@@ -1,3 +1,68 @@
+## What you need to do
+1. `git clone --recursive https://github.com/DrKLO/Telegram.git`
+2. Change `APP_ID` and `APP_HASH` in `Telegram/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java`
+3. Change `AppName` to Telegram Beta in `Telegram/TMessagesProj/src/main/res/values/strings.xml`
+4. In `Telegram/TMessagesProj/build.gradle`, add
+    ```gradle
+    implementation 'com.blankj:utilcodex:1.31.0'
+    ```
+5. In `Telegram/TMessagesProj/src/main/AndroidManifest.xml`, add
+    ```xml
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+    ```
+6. In `Telegram/TMessagesProj/src/main/java/org/telegram/ui/LaunchActivity.java`, add
+    ```java
+    import com.blankj.utilcode.util.FileIOUtils;
+    import com.blankj.utilcode.util.FileUtils;
+    import com.blankj.utilcode.util.UriUtils;
+    import android.content.ClipData;
+    import android.os.Environment;
+    ```
+    Below `if ((flags & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {`, add
+    ```java
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            !Environment.isExternalStorageManager()) {
+        Toast.makeText(this, "Storage Permission Needed", Toast.LENGTH_LONG).show();
+        Intent storage_intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+        intent.setData(Uri.parse("package:" + this.getPackageName()));
+        startActivityForResult(storage_intent, REQUEST_CODE_EXTERNAL_STORAGE);
+    }else{
+        //modify intent
+        File files = Environment.getExternalStorageDirectory();
+        if (FileUtils.isFileExists(new File(files,"Filelist.txt")))
+        {
+        	ArrayList<Uri> myUrisArray = new ArrayList<>();
+            // Filelist
+            List<String> Filelist = FileIOUtils.readFile2List(new File(files, "Filelist.txt"));
+            for (String filepath : Filelist) {
+                myUrisArray.add(UriUtils.file2Uri(new File(files, filepath)));
+            }
+            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
+            ClipData clipData = ClipData.newPlainText("simple text", "");
+            intent.setClipData(clipData);
+            intent.setAction(Intent.ACTION_SEND_MULTIPLE);
+        }
+    }
+    ```
+7. You can sync Gradle, but **DO NOT** upgrade Android Gradle Plugin. (Tested Android Studio version: 2020.3.1.26, Android Gradle Plugin version: 7.0.3, Gradle version: 7.0.2, Compile SDK version: 31, Build Tools version: 31.0.0, NDK version: 21.4.7075529)
+
+## How to use
+1. Say we have the chat log you want to import (WhatsAppFull.txt) in WhatsApp format and a MediaStorage folder which contains the multimedia files.
+2. Put WhatsAppFull.txt and MediaStorage under your local storage (typically `/storage/emulated/0/`).
+3. Create Filelist.txt in your local storage. The Filelist.txt should contain the list of files in MediaStorage, remember to include `/MediaStorage` but do not include `/storage/emulated/0/`. We will distinguish file list by recognizing new line. Remember to add the WhatsAppFull.txt in the list. Here's an example of Filelist.txt:
+    ```text
+    /WhatsAppFull.txt
+    /MediaStorage/IMG-20220611-WA0001.jpg
+    /MediaStorage/PTT-20220611-WA0001.opus
+    ```
+4. In WhatsApp, choose a chat (any chat will do) and Export chat, share to the modified Telegram.
+5. Import inside the Telegram app.
+
+## Credit
+
+[AndroidUtilCode](https://github.com/Blankj/AndroidUtilCode/)
+
 ## Telegram messenger for Android
 
 [Telegram](https://telegram.org) is a messaging app with a focus on speed and security. It’s superfast, simple and free.

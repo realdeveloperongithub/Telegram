@@ -69,6 +69,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
+import com.blankj.utilcode.util.FileIOUtils;
+import com.blankj.utilcode.util.FileUtils;
+import com.blankj.utilcode.util.UriUtils;
+import android.content.ClipData;
+import android.os.Environment;
 
 import androidx.annotation.NonNull;
 import androidx.arch.core.util.Function;
@@ -1861,6 +1866,29 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         importingStickersSoftware = null;
 
         if ((flags & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                    !Environment.isExternalStorageManager()) {
+                Toast.makeText(this, "Storage Permission Needed", Toast.LENGTH_LONG).show();
+                Intent storage_intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                intent.setData(Uri.parse("package:" + this.getPackageName()));
+                startActivityForResult(storage_intent, REQUEST_CODE_EXTERNAL_STORAGE);
+            }else{
+                //modify intent
+                File files = Environment.getExternalStorageDirectory();
+                if (FileUtils.isFileExists(new File(files,"Filelist.txt")))
+                {
+                    ArrayList<Uri> myUrisArray = new ArrayList<>();
+                    // Filelist
+                    List<String> Filelist = FileIOUtils.readFile2List(new File(files, "Filelist.txt"));
+                    for (String filepath : Filelist) {
+                        myUrisArray.add(UriUtils.file2Uri(new File(files, filepath)));
+                    }
+                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
+                    ClipData clipData = ClipData.newPlainText("simple text", "");
+                    intent.setClipData(clipData);
+                    intent.setAction(Intent.ACTION_SEND_MULTIPLE);
+                }
+            }
             if (intent != null && intent.getAction() != null && !restore) {
                 if (Intent.ACTION_SEND.equals(intent.getAction())) {
                     if (SharedConfig.directShare && intent != null && intent.getExtras() != null) {
