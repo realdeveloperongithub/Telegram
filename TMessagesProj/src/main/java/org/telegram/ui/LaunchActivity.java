@@ -1873,20 +1873,23 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 intent.setData(Uri.parse("package:" + this.getPackageName()));
                 startActivityForResult(storage_intent, REQUEST_CODE_EXTERNAL_STORAGE);
             }else{
-                //modify intent
-                File files = Environment.getExternalStorageDirectory();
-                if (FileUtils.isFileExists(new File(files,"Filelist.txt")))
-                {
-                    ArrayList<Uri> myUrisArray = new ArrayList<>();
-                    // Filelist
-                    List<String> Filelist = FileIOUtils.readFile2List(new File(files, "Filelist.txt"));
-                    for (String filepath : Filelist) {
-                        myUrisArray.add(UriUtils.file2Uri(new File(files, filepath)));
+                if ((Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())) || (Intent.ACTION_SEND.equals(intent.getAction()))) {
+                    if (intent.getStringExtra(Intent.EXTRA_SUBJECT).startsWith("WhatsApp Chat with")){
+                        //modify intent
+                        File files = Environment.getExternalStorageDirectory();
+                        if (FileUtils.isFileExists(new File(files, "Filelist.txt"))) {
+                            ArrayList<Uri> myUrisArray = new ArrayList<>();
+                            // Filelist
+                            List<String> Filelist = FileIOUtils.readFile2List(new File(files, "Filelist.txt"));
+                            for (String filepath : Filelist) {
+                                myUrisArray.add(UriUtils.file2Uri(new File(files, filepath)));
+                            }
+                            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
+                            ClipData clipData = ClipData.newPlainText("simple text", "");
+                            intent.setClipData(clipData);
+                            intent.setAction(Intent.ACTION_SEND_MULTIPLE);
+                        }
                     }
-                    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, myUrisArray);
-                    ClipData clipData = ClipData.newPlainText("simple text", "");
-                    intent.setClipData(clipData);
-                    intent.setAction(Intent.ACTION_SEND_MULTIPLE);
                 }
             }
             if (intent != null && intent.getAction() != null && !restore) {
